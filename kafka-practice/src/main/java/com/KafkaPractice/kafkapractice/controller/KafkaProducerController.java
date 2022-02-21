@@ -1,11 +1,15 @@
 package com.KafkaPractice.kafkapractice.controller;
 
+import com.KafkaPractice.kafkapractice.DataGenerator.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import java.util.Date;
+
+/*
+Rest controller running on localhost:8081
+Swagger hub found at localhost:8081/swagger-ui/
+ */
 
 @RestController
 @RequestMapping("/kafka")
@@ -14,19 +18,31 @@ public class KafkaProducerController {
     @Autowired
     private KafkaTemplate<Integer, String> kafkaTemplate;
 
-    private static final String TOPIC = "mytopic";
+    /*
+    User inputs the topic they want to post to, the rate at which
+    the messages should be published and also the duration of the publishing.
+    This is taken in the form of an html body
+     */
+    @PostMapping("/publish")
+    public void publishData(@RequestBody Message msg){
 
-    @GetMapping("/publish/{message}")
-    public String postMessage(@PathVariable("message") final String message){
+        long startTime = System.currentTimeMillis();
+        long elapsedTime = 0L;
 
-        kafkaTemplate.send(TOPIC, message);
+        //run the script until the user inputted duration is met
+        while(elapsedTime < msg.getDuration() * 60 * 1000){
+            //publish a randomly generated quote/trade
+            kafkaTemplate.send(msg.getTopic().toLowerCase(),msg.generateData());
 
-        return "Published successfully";
+            try{
+                Thread.sleep(1000 / msg.getRate());
+            }catch (InterruptedException ex){
+                //posting interrupted
+            }
 
+            //update timer
+            elapsedTime = (new Date()).getTime() - startTime;
+        }
     }
 
-    @GetMapping("/publish")
-    public String test(){
-        return "Test Successful";
-    }
 }
