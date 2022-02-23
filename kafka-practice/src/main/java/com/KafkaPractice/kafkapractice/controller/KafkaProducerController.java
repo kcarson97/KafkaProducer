@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.*;
 import java.util.Date;
+import java.util.logging.Logger;
 
 /*
 Rest controller running on localhost:8081
@@ -17,6 +18,8 @@ public class KafkaProducerController {
 
     @Autowired
     private KafkaTemplate<Integer, String> kafkaTemplate;
+
+    private final Logger LOG = Logger.getLogger(this.getClass().getName());
 
     /*
     User inputs the topic they want to post to, the rate at which
@@ -31,9 +34,20 @@ public class KafkaProducerController {
 
         //run the script until the user inputted duration is met
         while(elapsedTime < msg.getDuration() * 60 * 1000){
-            //publish a randomly generated quote/trade
-            kafkaTemplate.send(msg.getTopic().toLowerCase(),msg.generateData());
 
+            try{
+                String data = msg.generateData();
+                LOG.info("*** sending message: " + data + " to topic: " + msg.getTopic().toLowerCase());
+                //publish a randomly generated quote/trade
+                kafkaTemplate.send(msg.getTopic().toLowerCase(),data);
+            }catch (Exception e){
+                //data wasnt published successfully
+                LOG.warning("*** encountered error in method sendMessageToKafkaTopic: " + e.getMessage());
+                //stop
+                break;
+            }
+
+            //sleep every xs - dependant on user inputted rate
             try{
                 Thread.sleep(1000 / msg.getRate());
             }catch (InterruptedException ex){
