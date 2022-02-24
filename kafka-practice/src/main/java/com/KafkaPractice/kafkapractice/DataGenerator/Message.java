@@ -41,8 +41,10 @@ public class Message extends DataGenerator {
 
         if(topic.equalsIgnoreCase("quote")){
             return quoteFaker();
-        }else{
+        }else if(topic.equalsIgnoreCase("trade")){
             return tradeFaker();
+        }else{
+            return null;
         }
     }
 }

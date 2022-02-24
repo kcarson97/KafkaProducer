@@ -37,6 +37,10 @@ public class KafkaProducerController {
 
             try{
                 String data = msg.generateData();
+                if(data == null){
+                    LOG.info("*** topic : " + msg.getTopic() + " does not exist, publishing failed");
+                    break;
+                }
                 LOG.info("*** sending message: " + data + " to topic: " + msg.getTopic().toLowerCase());
                 //publish a randomly generated quote/trade
                 kafkaTemplate.send(msg.getTopic().toLowerCase(),data);
